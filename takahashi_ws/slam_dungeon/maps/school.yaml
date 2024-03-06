@@ -1,0 +1,9 @@
+image: 'school.pgm'
+resolution: 0.050000
+#origin: [-5.4329316, -83.46469, 0]
+#origin: [-2.700000, -27.489801, 0.000000]
+origin: [0, 0, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+
