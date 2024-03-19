@@ -1,0 +1,250 @@
+<!-- 初期位置の周辺のみを表示するスクリプト -->
+<!-- pgmの読み込みでつまずいたため、pythonでpgmをcsvに変換後、実行 -->
+<!-- 移動量に応じて、生成と削除をできるようにしたかった -->
+<!-- CORSエラーがでるため、firefoxで制限を解除して実験していた -->
+<!-- https://qiita.com/up-hash/items/9c178618873f1889e948 -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.152.2/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module">
+    //////////////////////////////////////////////////////////////////////////////////////
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+      document.addEventListener('keydown', keydown_ivent);
+
+      ////////////////////////////////////////////////////////////////////////////////////
+
+      // サイズを指定
+      const width = 960;
+      const height = 540;
+
+      // レンダラーを作成
+      const canvasElement = document.querySelector("#myCanvas");
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvasElement,
+      });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(width, height);
+
+
+      // シーンを作成
+      const scene = new THREE.Scene();
+
+      // カメラを作成
+      const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+      // カメラの初期座標を設定
+      
+
+      // カメラコントローラーを作成
+      const controls = new OrbitControls(camera, canvasElement);
+      controls.target.set(0, 0, 0);
+      controls.update();
+
+    //  オービット（周回軌道）: 左ボタンでドラッグ
+    // ズーム: マウスホイール
+    // パン: 右ボタンでドラッグ
+
+      // 平行光源を作成
+      // 上から照らす
+      const directionalLight = new THREE.DirectionalLight(0xffffff);
+      directionalLight.position.set(1, 1, 1);
+      scene.add(directionalLight);
+
+      // 横からテラス
+      const directionalLight2 = new THREE.DirectionalLight(0xffffff);
+      directionalLight2.position.set(1, 0, 1);
+      scene.add(directionalLight2);
+
+
+
+
+      //////////////////////////////////////////////////////////////////////////////////////////
+      //csv
+      // CSVファイルを取得
+      let csv = new XMLHttpRequest();
+      
+      // CSVファイルへのパス
+      csv.open("GET", "map.csv", false);
+      
+      // csvファイル読み込み失敗時のエラー対応
+      try {
+          csv.send(null);
+      } catch (err) {
+          alert("error");
+          console.log(err);
+      }
+      
+      // 配列を定義
+      let csvArray = [];
+      
+      // 改行ごとに配列化
+      let lines = csv.responseText.split(/\r\n|\n/);
+
+      // 1行ごとに処理
+      for (let i = 0; i < lines.length; ++i) {
+          let cells = lines[i].split(",");
+          if (cells.length != 1) {
+              csvArray.push(cells);
+          }
+      }
+      
+      // コンソールに配列を出力
+      console.log(csvArray.length);
+      console.log(csvArray[0].length);
+      
+      const rowLength=csvArray.length;
+      const columnLength=csvArray[0].length;
+      let planList=[];
+    ///////////////////////////////////////////////////////////////////////////////////
+      
+      camera.position.set(rowLength/2, 2, columnLength/2);
+      let place=[Math.round(rowLength/2), 2, Math.round(columnLength/2)];
+
+      const sideLength=1;
+      for(let i=0;i<rowLength;i++){
+
+        let tempList=[];
+        for(let j=0;j<columnLength;j++){
+          if(csvArray[i][j]>=100 && csvArray[i][j]<=255){
+            const geometry = new THREE.PlaneGeometry( sideLength, sideLength);
+            const material = new THREE.MeshBasicMaterial( {color: 0XE0FFFF, side: THREE.DoubleSide} );
+            const plane = new THREE.Mesh( geometry, material );
+            plane.rotation.x-= Math.PI/2;
+            plane.position.set(i, 0, j);
+            tempList.push(plane);
+          }
+          if(csvArray[i][j]>=0 && csvArray[i][j]<100){
+            const geometry = new THREE.BoxGeometry( sideLength, sideLength, 3 );
+            const material = new THREE.MeshBasicMaterial( {color: 0XF0FFF0} );
+            const cube = new THREE.Mesh( geometry, material );
+            cube.rotation.x-= Math.PI/2;
+            cube.position.set(i, 1.5, j);
+            tempList.push(cube);
+          }
+        }z
+        planList.push(tempList);
+      }
+
+      const visS
+      ize=10;
+      let lowX;
+      let lowZ;
+      let highX;
+      let highZ;
+
+      if(place[0]-visSize<0){
+        lowX=0;
+      }else{
+        lowX=place[0]-visSize;
+      }
+
+      if(place[0]+visSize>columnLength){
+        highX=columnLength;
+      }else{
+        highX=place[0]+visSize;
+      }
+
+      if(place[2]+visSize>rowLength){
+        highZ=rowLength;
+      }else{
+        highZ=place[2]+visSize;
+      }
+
+      if(place[2]-visSize<0){
+        lowZ=0;
+      }else{
+        lowZ=place[2]-visSize;
+      }
+
+      for(let i=lowZ;i<highZ;i++){
+
+        for(let j=lowX;j<highX ;j++){
+          console.log(i);
+           scene.add( planList[i][j] );
+        }
+
+      }
+
+
+      tick();
+
+      // 毎フレーム時に実行されるループイベントです
+      function tick() {
+          // model.rotation.y+=0.01;
+
+          // レンダリング
+          renderer.render(scene, camera);
+          requestAnimationFrame(tick);
+
+      }
+
+      let rotTheta=0;
+
+      function keydown_ivent(e) {
+        const moveLength=1;
+        const rotMove=10
+
+        if(e.key === 'w' || e.key === 'W'){
+          camera.position.z -= moveLength*Math.cos(rotTheta/180*Math.PI);
+          camera.position.x -= moveLength*Math.sin(rotTheta/180*Math.PI);
+        }
+        if(e.key === 's' || e.key === 'S'){
+          //Aキーが押された時の処理
+          camera.position.z += moveLength*Math.cos(rotTheta/180*Math.PI);
+          camera.position.x += moveLength*Math.sin(rotTheta/180*Math.PI);
+          
+        }
+        if(e.key === 'a' || e.key === 'A'){
+          //Aキーが押された時の処理
+          camera.position.x -= moveLength*Math.cos(rotTheta/180*Math.PI);
+          camera.position.z += moveLength*Math.sin(rotTheta/180*Math.PI);
+          
+        }
+        if(e.key === 'd' || e.key === 'D'){
+          //Aキーが押された時の処理
+          camera.position.x += moveLength*Math.cos(rotTheta/180*Math.PI);
+          camera.position.z -= moveLength*Math.sin(rotTheta/180*Math.PI);
+        }
+        if(e.key === 'o' || e.key === 'O'){
+          camera.position.y+=moveLength;
+        }
+        if(e.key === 'l' || e.key === 'L'){
+          //Aキーが押された時の処理
+          camera.position.y-=moveLength;
+        }
+        if(e.key==='ArrowUp'){
+          camera.rotation.x+=rotMove/180*Math.PI;
+          
+        }
+        if(e.key==='ArrowDown'){
+          camera.rotation.x-=rotMove/180*Math.PI;
+        }
+        if(e.key==='ArrowLeft'){
+          camera.rotation.y+=rotMove/180*Math.PI;
+          rotTheta+=rotMove;
+        }
+        if(e.key==='ArrowRight'){
+          camera.rotation.y-=rotMove/180*Math.PI;
+          rotTheta-=rotMove;
+        }
+
+
+        return false; 
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="myCanvas"></canvas>
+  </body>
+</html>

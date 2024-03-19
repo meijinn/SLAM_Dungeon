@@ -1,0 +1,147 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.152.2/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+      document.addEventListener('keydown', keydown_ivent);
+
+      
+
+      // サイズを指定
+      const width = 960;
+      const height = 540;
+
+      // レンダラーを作成
+      const canvasElement = document.querySelector("#myCanvas");
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvasElement,
+      });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(width, height);
+
+      // シーンを作成
+      const scene = new THREE.Scene();
+
+      // カメラを作成
+      const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+  
+
+
+      // 平行光源を作成
+      // 上から照らす
+      const directionalLight = new THREE.DirectionalLight(0xffffff);
+      directionalLight.position.set(1, 1, 1);
+      scene.add(directionalLight);
+
+      // 横からテラス
+      const directionalLight2 = new THREE.DirectionalLight(0xffffff);
+      directionalLight2.position.set(1, 0, 1);
+      scene.add(directionalLight2);
+
+      // GLTF形式のモデルデータを読み込む
+      const loader = new GLTFLoader();
+
+      
+      // GLTFファイルのパスを指定
+      const objects = await loader.loadAsync("school.glb");
+      // 読み込み後に3D空間に追加
+      const model = objects.scene;
+      scene.add(model);
+
+      // model.scale.set(1, 1, 1); // 大きさ30倍に拡大
+      // model.rotation.x+= Math.PI/2;
+      
+      model.position.set(0, 0, 0);
+
+      camera.position.set(14, 2, -10);
+ 
+      const geometry = new THREE.PlaneGeometry( 5, 20, 32 );
+      const material = new THREE.MeshBasicMaterial( {color: 0xFF0000, side: THREE.DoubleSide} );
+      const plane = new THREE.Mesh( geometry, material );
+      scene.add( plane );
+
+
+      tick();
+
+      // 毎フレーム時に実行されるループイベントです
+      function tick() {
+
+
+        // レンダリング
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
+
+      }
+
+      let rotTheta=0;
+
+      function keydown_ivent(e) {
+        const moveLength=4;
+        const rotMove=3;
+
+        
+
+        if(e.key === 'w' || e.key === 'W'){
+          camera.position.z -= moveLength*Math.cos(rotTheta/180*Math.PI);
+          camera.position.x -= moveLength*Math.sin(rotTheta/180*Math.PI);
+        }
+        if(e.key === 's' || e.key === 'S'){
+          //Aキーが押された時の処理
+          camera.position.z += moveLength*Math.cos(rotTheta/180*Math.PI);
+          camera.position.x += moveLength*Math.sin(rotTheta/180*Math.PI);
+          
+        }
+        if(e.key === 'a' || e.key === 'A'){
+          //Aキーが押された時の処理
+          camera.position.x -= moveLength*Math.cos(rotTheta/180*Math.PI);
+          camera.position.z += moveLength*Math.sin(rotTheta/180*Math.PI);
+          
+        }
+        if(e.key === 'd' || e.key === 'D'){
+          //Aキーが押された時の処理
+          camera.position.x += moveLength*Math.cos(rotTheta/180*Math.PI);
+          camera.position.z -= moveLength*Math.sin(rotTheta/180*Math.PI);
+        }
+        if(e.key === 'o' || e.key === 'O'){
+          camera.position.y+=moveLength;
+        }
+        if(e.key === 'l' || e.key === 'L'){
+          //Aキーが押された時の処理
+          camera.position.y-=moveLength;
+        }
+        if(e.key==='ArrowUp'){
+          camera.rotation.x+=rotMove/180*Math.PI;
+          
+        }
+        if(e.key==='ArrowDown'){
+          camera.rotation.x-=rotMove/180*Math.PI;
+        }
+        if(e.key==='ArrowLeft'){
+          camera.rotation.y+=rotMove/180*Math.PI;
+          rotTheta+=rotMove;
+        }
+        if(e.key==='ArrowRight'){
+          camera.rotation.y-=rotMove/180*Math.PI;
+          rotTheta-=rotMove;
+        }
+
+
+        return false; 
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="myCanvas"></canvas>
+  </body>
+</html>
